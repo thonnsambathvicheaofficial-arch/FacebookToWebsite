@@ -6,16 +6,23 @@ export function middleware(req: NextRequest) {
     const url = req.nextUrl;
     const hostname = req.headers.get("host") || "";
 
-    // Define allowed domains (including localhost for dev and your vercel production domain)
-    const allowedDomains = [
-        "localhost:3000",
-        "facebook-to-website.vercel.app",
-        "your-production-domain.com"
-    ];
+    // List of domains that are considered "root" and should show the landing page
+    const rootDomains = ["localhost:3000", "facebook-to-website.vercel.app", "your-production-domain.com"];
 
-    // Check if the current hostname is a subdomain
-    // We also ignore the base vercel.app domain if it's the root
-    const isSubdomain = !allowedDomains.includes(hostname) && hostname !== "vercel.app";
+    // Logic to determine if this is a subdomain request
+    let isSubdomain = false;
+
+    if (rootDomains.includes(hostname)) {
+        isSubdomain = false;
+    } else if (hostname.endsWith(".vercel.app")) {
+        // For vercel.app, if it has more than 2 segments (excluding vercel.app itself)
+        // e.g. "facebook-to-website.vercel.app" has segments: ["facebook-to-website", "vercel", "app"]
+        const segments = hostname.split(".");
+        isSubdomain = segments.length > 3;
+    } else {
+        // Fallback for custom domains
+        isSubdomain = !rootDomains.includes(hostname);
+    }
 
     if (isSubdomain) {
         // Extract subdomain (e.g., "demo" from "demo.localhost:3000")
