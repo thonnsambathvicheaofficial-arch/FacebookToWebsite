@@ -1,0 +1,42 @@
+{
+    "locale": "km",
+    "messages": {
+        "nav": {
+            "home": "ទំព័រដើម",
+            "products": "ផលិតផល",
+            "about": "អំពីយើង",
+            "contact": "ទំនាក់ទំនង"
+        },
+        "hero": {
+            "cta": "ទិញឥឡូវនេះ",
+            "learnMore": "ស្វែងយល់បន្ថែម"
+        },
+        "products": {
+            "title": "ផលិតផលពិសេស",
+            "description": "រកឃើញការប្រមូលផលិតផលថ្មីៗរបស់យើង។",
+            "outOfStock": "អស់ពីស្តុក",
+            "addToCart": "បន្ថែមទៅកន្ត្រក",
+            "quickView": "មើលរហ័ស"
+        },
+        "footer": {
+            "poweredBy": "ដំណើរការដោយ DigitalStore KH"
+        },
+        "editor": {
+            "siteEditor": "កែសម្រួលគេហទំព័រ",
+            "info": "ព័ត៌មាន",
+            "theme": "ស្បែក",
+            "siteName": "ឈ្មោះគេហទំព័រ",
+            "description": "ការពិពណ៌នា",
+            "phoneNumber": "លេខទូរស័ព្ទ",
+            "primaryColor": "ពណ៌សំខាន់",
+            "fontFamily": "ពុម្ពអក្សរ",
+            "publishSite": "បោះពុម្ពផ្សាយ",
+            "settings": "ការកំណត់",
+            "manageProducts": "គ្រប់គ្រងផលិតផល",
+            "hideShowHint": "ចុចរូបតំណាង \"ភ្នែក\" ដើម្បីលាក់/បង្ហាញផលិតផល។",
+            "hidden": "លាក់",
+            "hideProduct": "លាក់ផលិតផល",
+            "showProduct": "បង្ហាញផលិតផល"
+        }
+    }
+}

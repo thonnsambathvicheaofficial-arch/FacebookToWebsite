@@ -1,0 +1,42 @@
+{
+    "locale": "en",
+    "messages": {
+        "nav": {
+            "home": "Home",
+            "products": "Products",
+            "about": "About",
+            "contact": "Contact"
+        },
+        "hero": {
+            "cta": "Shop Now",
+            "learnMore": "Learn more"
+        },
+        "products": {
+            "title": "Featured Products",
+            "description": "Discover our latest collection of hand-crafted items.",
+            "outOfStock": "Out of Stock",
+            "addToCart": "Add to Cart",
+            "quickView": "Quick View"
+        },
+        "footer": {
+            "poweredBy": "Powered by DigitalStore KH"
+        },
+        "editor": {
+            "siteEditor": "Site Editor",
+            "info": "Info",
+            "theme": "Theme",
+            "siteName": "Site Name",
+            "description": "Description",
+            "phoneNumber": "Phone Number",
+            "primaryColor": "Primary Color",
+            "fontFamily": "Font Family",
+            "publishSite": "Publish Site",
+            "settings": "Settings",
+            "manageProducts": "Manage Products",
+            "hideShowHint": "Click the \"Eye\" icon to hide/show products on your live site.",
+            "hidden": "Hidden",
+            "hideProduct": "Hide Product",
+            "showProduct": "Show Product"
+        }
+    }
+}
