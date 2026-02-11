@@ -5,20 +5,18 @@ import type { NextRequest } from "next/server";
 export function middleware(req: NextRequest) {
     const hostname = req.headers.get("host") || "";
 
-    // 1. If it's the main domain, show the landing page
-    if (hostname === "facebook-to-website.vercel.app" || hostname === "localhost:3000") {
+    // 1. If it's the main domain (including sub-aliases or vercel previews), show the landing page
+    if (
+        hostname.includes("facebook-to-website") ||
+        hostname.includes("localhost") ||
+        hostname === "vercel.app"
+    ) {
         return NextResponse.next();
     }
 
-    // 2. Identify if it's a subdomain on vercel.app
+    // 2. Identify and rewrite subdomains
     const segments = hostname.split(".").filter(Boolean);
-    if (hostname.endsWith(".vercel.app") && segments.length > 3) {
-        const subdomain = segments[0];
-        return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url));
-    }
-
-    // 3. Handle other custom subdomains
-    if (!hostname.endsWith(".vercel.app") && segments.length > 2) {
+    if (segments.length > (hostname.endsWith(".vercel.app") ? 3 : 1)) {
         const subdomain = segments[0];
         return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url));
     }

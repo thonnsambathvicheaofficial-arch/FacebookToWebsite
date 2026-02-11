@@ -47,6 +47,9 @@ export default function SitePage({ params }: { params: { subdomain: string } }) 
             </main>
 
             <Footer config={siteConfig} />
+            <div className="fixed bottom-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg z-[9999] opacity-50">
+                REWRITTEN: {params.subdomain}
+            </div>
         </div>
     );
 }
