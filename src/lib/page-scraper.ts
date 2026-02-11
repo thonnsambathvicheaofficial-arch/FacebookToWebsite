@@ -42,21 +42,27 @@ export function extractPageIdentifier(url: string): string | null {
         // Remove leading/trailing slashes
         const cleanPath = pathname.replace(/^\/|\/$/g, '');
 
-        // Handle profile.php?id=xxx format
+        // 1. Handle /share/ links (Special Case)
+        if (cleanPath.startsWith('share/')) {
+            throw new Error('Mobile "Share" links are not supported yet. Please paste the full Page URL (e.g., facebook.com/yourbrand).');
+        }
+
+        // 2. Handle profile.php?id=xxx format
         if (cleanPath === 'profile.php' || cleanPath === 'profile') {
             const id = urlObj.searchParams.get('id');
             if (id) return id;
         }
 
-        // Handle /pages/name/id format
+        // 3. Handle /pages/name/id format
         if (cleanPath.startsWith('pages/')) {
             const parts = cleanPath.split('/');
             return parts[parts.length - 1]; // Return the ID
         }
 
-        // Handle direct page name
-        const pageName = cleanPath.split('/')[0];
-        return pageName || null;
+        // 4. Handle direct page name (default)
+        // This works for web.facebook.com, m.facebook.com, etc.
+        const segments = cleanPath.split('/').filter(Boolean);
+        return segments[0] || null;
     } catch (error) {
         return null;
     }
