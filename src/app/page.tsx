@@ -55,6 +55,7 @@ export default function Home() {
           <p className="text-xl text-gray-600 dark:text-gray-400">
             Built for Cambodian businesses. No coding required.
           </p>
+          <p className="hidden">Build ID: 2026-02-11-2155</p>
         </div>
 
         {/* Main Card */}

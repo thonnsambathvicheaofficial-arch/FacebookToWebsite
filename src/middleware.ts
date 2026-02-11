@@ -12,12 +12,14 @@ export function middleware(req: NextRequest) {
     // Logic to determine if this is a subdomain request
     let isSubdomain = false;
 
+    // Debugging: uncomment to see logs in Vercel console
+    // console.log("Middleware checking host:", hostname);
+
     if (rootDomains.includes(hostname)) {
         isSubdomain = false;
     } else if (hostname.endsWith(".vercel.app")) {
-        // For vercel.app, if it has more than 2 segments (excluding vercel.app itself)
-        // e.g. "facebook-to-website.vercel.app" has segments: ["facebook-to-website", "vercel", "app"]
-        const segments = hostname.split(".");
+        // For vercel.app, if it has more than 3 segments (e.g. demo.site.vercel.app)
+        const segments = hostname.split(".").filter(Boolean);
         isSubdomain = segments.length > 3;
     } else {
         // Fallback for custom domains
