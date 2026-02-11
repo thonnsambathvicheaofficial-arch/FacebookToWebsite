@@ -6,11 +6,16 @@ export function middleware(req: NextRequest) {
     const url = req.nextUrl;
     const hostname = req.headers.get("host") || "";
 
-    // Define allowed domains (including localhost for dev)
-    const allowedDomains = ["localhost:3000", "your-production-domain.com"];
+    // Define allowed domains (including localhost for dev and your vercel production domain)
+    const allowedDomains = [
+        "localhost:3000",
+        "facebook-to-website.vercel.app",
+        "your-production-domain.com"
+    ];
 
     // Check if the current hostname is a subdomain
-    const isSubdomain = !allowedDomains.includes(hostname);
+    // We also ignore the base vercel.app domain if it's the root
+    const isSubdomain = !allowedDomains.includes(hostname) && hostname !== "vercel.app";
 
     if (isSubdomain) {
         // Extract subdomain (e.g., "demo" from "demo.localhost:3000")
