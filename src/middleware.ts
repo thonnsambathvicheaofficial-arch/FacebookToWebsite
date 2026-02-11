@@ -3,37 +3,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(req: NextRequest) {
-    const url = req.nextUrl;
     const hostname = req.headers.get("host") || "";
 
-    // List of domains that are considered "root" and should show the landing page
-    const rootDomains = ["localhost:3000", "facebook-to-website.vercel.app", "your-production-domain.com"];
-
-    // Logic to determine if this is a subdomain request
-    let isSubdomain = false;
-
-    // Debugging: uncomment to see logs in Vercel console
-    // console.log("Middleware checking host:", hostname);
-
-    if (rootDomains.includes(hostname)) {
-        isSubdomain = false;
-    } else if (hostname.endsWith(".vercel.app")) {
-        // For vercel.app, if it has more than 3 segments (e.g. demo.site.vercel.app)
-        const segments = hostname.split(".").filter(Boolean);
-        isSubdomain = segments.length > 3;
-    } else {
-        // Fallback for custom domains
-        isSubdomain = !rootDomains.includes(hostname);
+    // 1. If it's the main domain, show the landing page
+    if (hostname === "facebook-to-website.vercel.app" || hostname === "localhost:3000") {
+        return NextResponse.next();
     }
 
-    if (isSubdomain) {
-        // Extract subdomain (e.g., "demo" from "demo.localhost:3000")
-        const subdomain = hostname.split(".")[0];
+    // 2. Identify if it's a subdomain on vercel.app
+    const segments = hostname.split(".").filter(Boolean);
+    if (hostname.endsWith(".vercel.app") && segments.length > 3) {
+        const subdomain = segments[0];
+        return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url));
+    }
 
-        // Rewrite the URL to a dynamic route handler for sites
-        // e.g. demo.localhost:3000 -> localhost:3000/sites/demo
-        // We haven't built /sites/[subdomain] yet, but let's point to /preview for now
-        // or better yet, a dedicated dynamic route we will build next.
+    // 3. Handle other custom subdomains
+    if (!hostname.endsWith(".vercel.app") && segments.length > 2) {
+        const subdomain = segments[0];
         return NextResponse.rewrite(new URL(`/sites/${subdomain}`, req.url));
     }
 
