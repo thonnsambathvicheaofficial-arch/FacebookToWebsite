@@ -42,6 +42,12 @@ export function extractPageIdentifier(url: string): string | null {
         // Remove leading/trailing slashes
         const cleanPath = pathname.replace(/^\/|\/$/g, '');
 
+        // Handle profile.php?id=xxx format
+        if (cleanPath === 'profile.php' || cleanPath === 'profile') {
+            const id = urlObj.searchParams.get('id');
+            if (id) return id;
+        }
+
         // Handle /pages/name/id format
         if (cleanPath.startsWith('pages/')) {
             const parts = cleanPath.split('/');
@@ -75,7 +81,14 @@ export async function scrapePublicPage(pageUrl: string): Promise<ScrapedPageData
         const response = await fetch(apiUrl);
 
         if (!response.ok) {
-            throw new Error('Failed to fetch page data. Make sure the page is public.');
+            const errorData = await response.json().catch(() => ({}));
+            console.error('Facebook API Error:', errorData);
+
+            if (errorData.error?.message?.includes('alias')) {
+                throw new Error('This appears to be a personal profile or a private page. The engine only works with public Business Pages.');
+            }
+
+            throw new Error(`Facebook API Error: ${errorData.error?.message || response.statusText}`);
         }
 
         const data = await response.json();
@@ -105,8 +118,8 @@ export async function scrapePublicPage(pageUrl: string): Promise<ScrapedPageData
                 url: post.permalink_url,
             })),
         };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Scraping error:', error);
-        throw new Error('Unable to access this Facebook page. It may be private or the URL is incorrect.');
+        throw new Error(error.message || 'Unable to access this Facebook page. It may be private or the URL is incorrect.');
     }
 }
