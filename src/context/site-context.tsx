@@ -17,8 +17,28 @@ interface SiteContextType {
 const SiteContext = createContext<SiteContextType | undefined>(undefined);
 
 export function SiteProvider({ children }: { children: ReactNode }) {
-    const [siteConfig, setSiteConfig] = useState<SiteConfig>(MOCK_SITE_CONFIG);
-    const [products, setProducts] = useState<Product[]>(MOCK_PRODUCTS);
+    // Initial state can be from MOCK or from generated data in sessionStorage
+    const [siteConfig, setSiteConfig] = useState<SiteConfig>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem("generatedSite");
+            if (saved) {
+                const data = JSON.parse(saved);
+                return data.site;
+            }
+        }
+        return MOCK_SITE_CONFIG;
+    });
+
+    const [products, setProducts] = useState<Product[]>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = sessionStorage.getItem("generatedSite");
+            if (saved) {
+                const data = JSON.parse(saved);
+                return data.products || [];
+            }
+        }
+        return MOCK_PRODUCTS;
+    });
 
     const updateSiteConfig = (newConfig: Partial<SiteConfig>) => {
         setSiteConfig((prev) => ({ ...prev, ...newConfig }));

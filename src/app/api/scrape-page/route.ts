@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
         const scrapedData = await scrapePublicPage(pageUrl);
 
         // Generate site configuration from scraped data
-        const { site, products } = generateSiteFromScrapedData(scrapedData);
+        const { site, products } = generateSiteFromScrapedData(scrapedData, pageUrl);
 
         return NextResponse.json({
             success: true,

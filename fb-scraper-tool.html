@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FB Page Scraper — Dev Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0a0f; --surface: #111118; --surface2: #1a1a24; --border: #2a2a3a;
+    --accent: #4f6ef7; --accent2: #7c3aed; --green: #22c55e; --red: #ef4444;
+    --amber: #f59e0b; --text: #e8e8f0; --muted: #6b6b80;
+    --font-mono: 'JetBrains Mono', monospace; --font-display: 'Syne', sans-serif;
+  }
+  body { background: var(--bg); color: var(--text); font-family: var(--font-mono); min-height: 100vh; overflow-x: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: linear-gradient(rgba(79,110,247,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(79,110,247,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .container { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 40px 24px; }
+  .header { display: flex; align-items: center; gap: 16px; margin-bottom: 48px; padding-bottom: 24px; border-bottom: 1px solid var(--border); }
+  .header-icon { width: 48px; height: 48px; background: linear-gradient(135deg, var(--accent), var(--accent2)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; }
+  .header-title { font-family: var(--font-display); font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .header-title span { color: var(--accent); }
+  .header-sub { font-size: 11px; color: var(--muted); margin-top: 2px; letter-spacing: 1px; text-transform: uppercase; }
+  .badge { margin-left: auto; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: var(--red); font-size: 10px; padding: 4px 10px; border-radius: 99px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width: 768px) { .grid { grid-template-columns: 1fr; } }
+  .full-width { grid-column: 1 / -1; }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; background: var(--surface2); }
+  .card-header-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dot-blue { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+  .dot-purple { background: var(--accent2); box-shadow: 0 0 6px var(--accent2); }
+  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-amber { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+  .card-title { font-family: var(--font-display); font-size: 13px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; }
+  .card-tag { margin-left: auto; font-size: 9px; padding: 2px 8px; border-radius: 4px; letter-spacing: 1px; text-transform: uppercase; }
+  .tag-free { background: rgba(34,197,94,0.15); color: var(--green); }
+  .tag-api { background: rgba(79,110,247,0.15); color: var(--accent); }
+  .tag-cred { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .card-body { padding: 20px; }
+  .method-steps { display: flex; flex-direction: column; gap: 8px; }
+  .step { display: flex; gap: 12px; align-items: flex-start; padding: 10px 12px; background: var(--surface2); border-radius: 8px; border: 1px solid var(--border); transition: border-color 0.2s; cursor: pointer; }
+  .step:hover { border-color: var(--accent); }
+  .step.active-step { border-color: var(--accent); background: rgba(79,110,247,0.05); }
+  .step-num { width: 22px; height: 22px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-title { font-size: 12px; font-weight: 600; color: var(--text); }
+  .step-desc { font-size: 10px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+  .divider { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 10px; margin: 16px 0; letter-spacing: 1px; text-transform: uppercase; }
+  .divider::before, .divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .fields-checklist { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 10px; }
+  .field-check { display: flex; align-items: center; gap: 7px; padding: 7px 10px; background: var(--surface2); border-radius: 6px; border: 1px solid var(--border); font-size: 11px; cursor: pointer; transition: border-color 0.15s; user-select: none; }
+  .field-check:hover { border-color: var(--accent); }
+  .field-check input[type=checkbox] { accent-color: var(--accent); width: 13px; height: 13px; }
+  .field-check.checked { border-color: rgba(79,110,247,0.4); background: rgba(79,110,247,0.05); }
+  label.form-label { display: block; font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; margin-top: 14px; }
+  label.form-label:first-child { margin-top: 0; }
+  input[type=text], input[type=password], select, textarea {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-family: var(--font-mono); font-size: 12px; padding: 10px 12px; outline: none; transition: border-color 0.2s;
+  }
+  input[type=text]:focus, input[type=password]:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(79,110,247,0.15); }
+  input::placeholder { color: var(--muted); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: var(--surface2); }
+  .secret-field { position: relative; }
+  .secret-field input { padding-right: 38px; }
+  .eye-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--muted); cursor: pointer; padding: 2px; font-size: 14px; }
+  .eye-btn:hover { color: var(--text); }
+  .btn { padding: 10px 18px; border: none; border-radius: 8px; font-family: var(--font-mono); font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .btn-primary { background: linear-gradient(135deg, var(--accent), #3b5ce4); color: #fff; }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(79,110,247,0.4); }
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-green { background: linear-gradient(135deg, #16a34a, var(--green)); color: #fff; }
+  .btn-green:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(34,197,94,0.3); }
+  .btn-full { width: 100%; justify-content: center; margin-top: 14px; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+  .alert { padding: 10px 14px; border-radius: 8px; font-size: 11px; margin-top: 12px; display: flex; align-items: flex-start; gap: 8px; line-height: 1.6; }
+  .alert-info { background: rgba(79,110,247,0.1); border: 1px solid rgba(79,110,247,0.2); color: #93a8ff; }
+  .alert-success { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.2); color: #86efac; }
+  .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.2); color: #fca5a5; }
+  .alert-warn { background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.2); color: #fcd34d; }
+  .log-panel { background: #07070d; border: 1px solid var(--border); border-radius: 10px; padding: 16px; font-size: 11px; line-height: 1.8; max-height: 340px; overflow-y: auto; }
+  .log-line { display: flex; gap: 10px; }
+  .log-time { color: var(--muted); flex-shrink: 0; }
+  .log-ok { color: var(--green); } .log-err { color: var(--red); } .log-info { color: var(--accent); } .log-warn { color: var(--amber); } .log-data { color: #c084fc; }
+  .data-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; margin-top: 12px; }
+  .data-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .data-card-label { font-size: 9px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .data-card-value { font-size: 12px; color: var(--text); word-break: break-all; }
+  .data-card-value.large { font-family: var(--font-display); font-size: 20px; font-weight: 700; color: var(--accent); }
+  .cred-status { display: flex; align-items: center; gap: 6px; font-size: 10px; padding: 6px 10px; background: var(--surface2); border-radius: 6px; border: 1px solid var(--border); margin-top: 10px; }
+  .cred-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .json-output { background: #07070d; border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-size: 11px; max-height: 280px; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #a5f3fc; margin-top: 12px; }
+  .copy-btn { padding: 3px 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; color: var(--muted); font-family: var(--font-mono); font-size: 9px; cursor: pointer; transition: all 0.2s; }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent); }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  .spinning { animation: spin 1s linear infinite; display: inline-block; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .fade-in { animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-icon">⚡</div>
+    <div>
+      <div class="header-title">FB Page <span>Scraper</span> Dev Tool</div>
+      <div class="header-sub">Facebook → Website Engine · Developer Console</div>
+    </div>
+    <div class="badge" id="credBadge">● No Credentials</div>
+  </div>
+
+  <div class="grid">
+
+    <!-- Method Selector -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-dot dot-blue"></div>
+        <div class="card-title">Scrape Method</div>
+        <span class="card-tag tag-free">3 Methods</span>
+      </div>
+      <div class="card-body">
+        <div class="method-steps">
+          <div class="step active-step" onclick="selectMethod('public')" id="method-public">
+            <div class="step-num">1</div>
+            <div>
+              <div class="step-title">🌐 Public Graph API</div>
+              <div class="step-desc">Uses your App Token. No user login needed. Works for any public Facebook business page. Most data available.</div>
+            </div>
+          </div>
+          <div class="step" onclick="selectMethod('oEmbed')" id="method-oEmbed">
+            <div class="step-num">2</div>
+            <div>
+              <div class="step-title">🔗 oEmbed + Meta API</div>
+              <div class="step-desc">Fetch embed metadata. Lightweight, rate-limit friendly. Good for quick previews and page title/thumbnail.</div>
+            </div>
+          </div>
+          <div class="step" onclick="selectMethod('proxy')" id="method-proxy">
+            <div class="step-num">3</div>
+            <div>
+              <div class="step-title">🛡 Proxy HTML Scrape</div>
+              <div class="step-desc">Route through CORS proxy. No API key needed. Extracts OG meta tags only. Fallback method.</div>
+            </div>
+          </div>
+        </div>
+        <div class="divider">Fields to extract</div>
+        <div class="fields-checklist" id="fieldsList">
+          <label class="field-check checked"><input type="checkbox" checked value="name"> Page Name</label>
+          <label class="field-check checked"><input type="checkbox" checked value="about"> About / Bio</label>
+          <label class="field-check checked"><input type="checkbox" checked value="cover"> Cover Photo</label>
+          <label class="field-check checked"><input type="checkbox" checked value="picture"> Profile Picture</label>
+          <label class="field-check"><input type="checkbox" value="posts"> Recent Posts</label>
+          <label class="field-check"><input type="checkbox" value="photos"> Photos Album</label>
+          <label class="field-check"><input type="checkbox" value="phone"> Phone Number</label>
+          <label class="field-check"><input type="checkbox" value="website"> Website URL</label>
+          <label class="field-check"><input type="checkbox" value="category"> Business Category</label>
+          <label class="field-check"><input type="checkbox" value="hours"> Business Hours</label>
+          <label class="field-check"><input type="checkbox" value="location"> Location / Address</label>
+          <label class="field-check"><input type="checkbox" value="rating"> Rating &amp; Reviews</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Credentials -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-dot dot-amber"></div>
+        <div class="card-title">App Credentials</div>
+        <span class="card-tag tag-cred">Session Only</span>
+      </div>
+      <div class="card-body">
+        <div class="alert alert-warn">⚠️ Credentials stay in your browser session only. Never stored or sent to any third-party server.</div>
+        <label class="form-label">Facebook App ID</label>
+        <input type="text" id="appId" placeholder="e.g. 1234567890123456" oninput="updateCredStatus()">
+        <label class="form-label">App Secret</label>
+        <div class="secret-field">
+          <input type="password" id="appSecret" placeholder="32-character hex string" oninput="updateCredStatus()">
+          <button class="eye-btn" onclick="toggleSecret('appSecret',this)">👁</button>
+        </div>
+        <label class="form-label">Access Token (or leave blank to auto-generate)</label>
+        <div class="secret-field">
+          <input type="password" id="accessToken" placeholder="EAAxxxxxxx... or generate below" oninput="updateCredStatus()">
+          <button class="eye-btn" onclick="toggleSecret('accessToken',this)">👁</button>
+        </div>
+        <label class="form-label">API Version</label>
+        <select id="apiVersion">
+          <option value="v22.0">v22.0 (Latest 2025)</option>
+          <option value="v21.0">v21.0</option>
+          <option value="v19.0">v19.0</option>
+          <option value="v18.0">v18.0</option>
+        </select>
+        <div class="cred-status">
+          <div class="cred-dot" style="background:var(--red)" id="credDot"></div>
+          <span id="credStatusText">No credentials entered</span>
+        </div>
+        <button class="btn btn-secondary btn-full" onclick="generateAppToken()">⚡ Generate App Token from ID + Secret</button>
+        <div class="divider">verify</div>
+        <button class="btn btn-green btn-full" onclick="testCredentials()">✓ Test Credentials Against API</button>
+        <div id="credTestResult"></div>
+      </div>
+    </div>
+
+    <!-- Scraper Input -->
+    <div class="card full-width">
+      <div class="card-header">
+        <div class="card-header-dot dot-purple"></div>
+        <div class="card-title">Scraper Input</div>
+        <span class="card-tag tag-api">Run Extraction</span>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+          <div>
+            <label class="form-label">Facebook Page URL or Page ID</label>
+            <input type="text" id="pageUrl" placeholder="https://www.facebook.com/YourBusinessPage  OR  numeric Page ID">
+          </div>
+          <button class="btn btn-primary" onclick="runScraper()" id="runBtn" style="margin-bottom:1px">▶ Run Scraper</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="loadSample('restaurant')">🍜 Sample: Restaurant</button>
+          <button class="btn btn-secondary" onclick="loadSample('shop')">🛍 Sample: Shop</button>
+          <button class="btn btn-secondary" onclick="loadSample('service')">💼 Sample: Service</button>
+          <button class="btn btn-secondary" style="margin-left:auto" onclick="clearLog()">🗑 Clear Log</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Log -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-dot dot-green"></div>
+        <div class="card-title">Execution Log</div>
+        <button class="copy-btn" onclick="copyLog()">COPY</button>
+      </div>
+      <div class="card-body" style="padding:12px">
+        <div class="log-panel" id="logPanel">
+          <div class="log-line"><span class="log-time">--:--:--</span><span class="log-info">› Ready. Enter credentials and a page URL to begin.</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-header-dot dot-purple"></div>
+        <div class="card-title">Extracted Data</div>
+        <button class="copy-btn" onclick="copyResult()">COPY JSON</button>
+      </div>
+      <div class="card-body">
+        <div id="dataPreview">
+          <div class="alert alert-info">ℹ️ Run the scraper to see extracted data here as structured JSON, ready for your website generator.</div>
+        </div>
+        <div class="json-output" id="jsonOutput" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- API Builder -->
+    <div class="card full-width">
+      <div class="card-header">
+        <div class="card-header-dot dot-amber"></div>
+        <div class="card-title">Live API Request Preview</div>
+      </div>
+      <div class="card-body">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+          <div>
+            <label class="form-label">Graph API Endpoint</label>
+            <input type="text" id="endpointPreview" readonly style="color:var(--accent);font-size:11px" value="Enter a URL above to preview">
+            <label class="form-label" style="margin-top:10px">Selected Fields</label>
+            <input type="text" id="fieldsPreview" readonly style="color:#c084fc;font-size:10px" value="name,about,cover,picture">
+          </div>
+          <div>
+            <label class="form-label">cURL Command</label>
+            <textarea id="curlPreview" readonly style="font-size:10px;color:#86efac;min-height:90px">Run the scraper to generate a cURL command</textarea>
+          </div>
+        </div>
+        <button class="btn btn-secondary" style="margin-top:10px" onclick="refreshPreview()">↻ Refresh Preview</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+let currentMethod = 'public';
+let scrapedData = null;
+let logLines = [];
+
+const fieldMap = {
+  name:'name', about:'about', cover:'cover{source,id}',
+  picture:'picture.type(large){url,width,height}',
+  posts:'posts.limit(10){message,story,created_time,attachments{media,type}}',
+  photos:'photos.limit(20){source,name,created_time}',
+  phone:'phone', website:'website', category:'category,category_list',
+  hours:'hours', location:'location,single_line_address', rating:'overall_star_rating,rating_count'
+};
+
+function selectMethod(m) {
+  currentMethod = m;
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active-step'));
+  document.getElementById('method-' + m).classList.add('active-step');
+  log('info', 'Method: ' + m);
+}
+
+function toggleSecret(id, btn) {
+  const el = document.getElementById(id);
+  el.type = el.type === 'password' ? 'text' : 'password';
+  btn.textContent = el.type === 'password' ? '👁' : '🙈';
+}
+
+function getCreds() {
+  return {
+    appId: document.getElementById('appId').value.trim(),
+    appSecret: document.getElementById('appSecret').value.trim(),
+    accessToken: document.getElementById('accessToken').value.trim(),
+    version: document.getElementById('apiVersion').value
+  };
+}
+
+function updateCredStatus() {
+  const c = getCreds();
+  const dot = document.getElementById('credDot');
+  const txt = document.getElementById('credStatusText');
+  const badge = document.getElementById('credBadge');
+  if (c.accessToken) {
+    dot.style.background = 'var(--green)';
+    txt.textContent = 'Access token present ✓';
+    badge.textContent = '● Credentials Set';
+    badge.style.cssText = 'background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);color:var(--green);font-size:10px;padding:4px 10px;border-radius:99px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;margin-left:auto';
+  } else if (c.appId && c.appSecret) {
+    dot.style.background = 'var(--amber)';
+    txt.textContent = 'App ID + Secret set — generate token below';
+    badge.textContent = '● Partial Creds';
+    badge.style.cssText = 'background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.3);color:var(--amber);font-size:10px;padding:4px 10px;border-radius:99px;letter-spacing:1px;text-transform:uppercase;white-space:nowrap;margin-left:auto';
+  } else {
+    dot.style.background = 'var(--red)';
+    txt.textContent = 'No credentials entered';
+  }
+}
+
+async function generateAppToken() {
+  const c = getCreds();
+  if (!c.appId || !c.appSecret) { showCredResult('error', '✗ Enter App ID and App Secret first.'); return; }
+  log('info', 'Generating App Access Token...');
+  const url = `https://graph.facebook.com/oauth/access_token?client_id=${c.appId}&client_secret=${c.appSecret}&grant_type=client_credentials`;
+  log('data', 'GET /oauth/access_token?grant_type=client_credentials');
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.access_token) {
+      document.getElementById('accessToken').value = data.access_token;
+      updateCredStatus();
+      log('ok', 'App Token generated: ' + data.access_token.slice(0,20) + '...');
+      showCredResult('success', '✓ Token generated! Type: ' + data.token_type);
+    } else {
+      log('err', 'Token failed: ' + JSON.stringify(data.error));
+      showCredResult('error', '✗ ' + (data.error?.message || 'Failed'));
+    }
+  } catch(e) { log('err', e.message); showCredResult('error', '✗ Network error: ' + e.message); }
+}
+
+async function testCredentials() {
+  const c = getCreds();
+  if (!c.accessToken) { showCredResult('error', '✗ No token. Generate one first.'); return; }
+  log('info', 'Testing credentials...');
+  try {
+    const res = await fetch(`https://graph.facebook.com/${c.version}/me?access_token=${c.accessToken}`);
+    const data = await res.json();
+    if (data.id) {
+      log('ok', 'Credentials valid. App ID: ' + data.id);
+      showCredResult('success', '✓ Valid! Token App ID: ' + data.id);
+    } else {
+      log('err', data.error?.message || 'Invalid');
+      showCredResult('error', '✗ ' + (data.error?.message || 'Invalid token'));
+    }
+  } catch(e) { log('err', e.message); showCredResult('error', '✗ ' + e.message); }
+}
+
+function showCredResult(type, msg) {
+  const map = { success:'alert-success', error:'alert-error', info:'alert-info' };
+  document.getElementById('credTestResult').innerHTML = `<div class="alert ${map[type]} fade-in">${msg}</div>`;
+}
+
+function extractPageId(input) {
+  input = input.trim();
+  if (/^\d+$/.test(input)) return input;
+  const pats = [/facebook\.com\/pages\/[^/]+\/(\d+)/, /facebook\.com\/profile\.php\?id=(\d+)/, /(?:web\.)?facebook\.com\/([^/?#]+)/];
+  for (const p of pats) { const m = input.match(p); if (m) return m[1]; }
+  return input;
+}
+
+function getSelectedFields() {
+  return Array.from(document.querySelectorAll('#fieldsList input[type=checkbox]:checked')).map(cb => cb.value);
+}
+
+async function runScraper() {
+  const rawUrl = document.getElementById('pageUrl').value.trim();
+  if (!rawUrl) { log('err', 'No URL entered.'); return; }
+  const fields = getSelectedFields();
+  if (!fields.length) { log('warn', 'No fields selected.'); return; }
+  const btn = document.getElementById('runBtn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinning">↻</span> Scraping...';
+  const c = getCreds();
+  const pageId = extractPageId(rawUrl);
+  log('info', `Scraping [${currentMethod}] → ${pageId}`);
+  log('info', `Fields: ${fields.join(', ')}`);
+  try {
+    if (currentMethod === 'public') await scrapeGraph(pageId, fields, c);
+    else if (currentMethod === 'oEmbed') await scrapeOEmbed(rawUrl, c);
+    else await scrapeProxy(rawUrl);
+  } catch(e) { log('err', e.message); }
+  btn.disabled = false; btn.innerHTML = '▶ Run Scraper';
+}
+
+async function scrapeGraph(pageId, fields, c) {
+  const fieldQ = fields.map(f => fieldMap[f] || f).join(',');
+  const base = `https://graph.facebook.com/${c.version || 'v22.0'}/${pageId}`;
+  const params = new URLSearchParams({ fields: fieldQ });
+  if (c.accessToken) params.append('access_token', c.accessToken);
+  log('data', `GET ${base}?fields=${fieldQ.slice(0,60)}...`);
+  updatePreviewWith(base, fieldQ, c);
+  const res = await fetch(`${base}?${params}`);
+  const data = await res.json();
+  if (data.error) {
+    log('err', `(${data.error.code}) ${data.error.message}`);
+    if (data.error.code === 200 || data.error.code === 190) log('warn', '→ Fix: Invalid App ID or token. Use the Credentials panel.');
+    if (data.error.code === 100) log('warn', '→ Fix: Unknown field or invalid page username/ID.');
+    showError(data.error); return;
+  }
+  log('ok', `Success: ${data.name || pageId}`);
+  if (data.posts?.data) log('ok', data.posts.data.length + ' posts');
+  if (data.photos?.data) log('ok', data.photos.data.length + ' photos');
+  scrapedData = data; renderResults(data);
+}
+
+async function scrapeOEmbed(pageUrl, c) {
+  const token = c.accessToken || `${c.appId}|${c.appSecret}`;
+  const endpoint = `https://graph.facebook.com/${c.version || 'v22.0'}/oembed_page`;
+  log('data', `GET /oembed_page?url=${pageUrl}`);
+  const res = await fetch(`${endpoint}?url=${encodeURIComponent(pageUrl)}&access_token=${token}`);
+  const data = await res.json();
+  if (data.error) { log('err', data.error.message); showError(data.error); return; }
+  log('ok', 'oEmbed success: ' + data.title);
+  scrapedData = data; renderResults(data);
+}
+
+async function scrapeProxy(pageUrl) {
+  log('info', 'Proxy fetch via allorigins.win...');
+  const res = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(pageUrl)}`);
+  const json = await res.json();
+  if (!json.contents) { log('err', 'Proxy returned empty. Facebook may be blocking.'); showError({ message: 'Proxy fetch failed.' }); return; }
+  const html = json.contents;
+  const extracted = {};
+  const og = (prop) => { const m = html.match(new RegExp(`<meta property="${prop}" content="([^"]+)"`)); return m ? m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>') : null; };
+  const t = og('og:title'); const d = og('og:description'); const i = og('og:image'); const u = og('og:url');
+  if (t) extracted.name = t;
+  if (d) extracted.about = d;
+  if (i) extracted.cover_image = i;
+  if (u) extracted.page_url = u;
+  extracted._method = 'proxy_html_og_tags';
+  extracted._note = 'Limited data. OG meta tags only. Use Graph API for full data.';
+  log('ok', `Proxy parse done. Fields: ${Object.keys(extracted).filter(k=>!k.startsWith('_')).join(', ')}`);
+  log('warn', 'Proxy method = OG tags only. Recommend Graph API for full extraction.');
+  scrapedData = extracted; renderResults(extracted);
+}
+
+function renderResults(data) {
+  const cards = [];
+  if (data.name) cards.push({label:'Page Name',value:data.name,large:true});
+  if (data.category) cards.push({label:'Category',value:data.category});
+  if (data.about) cards.push({label:'About',value:data.about.slice(0,100)+(data.about.length>100?'..':'')});
+  if (data.phone) cards.push({label:'Phone',value:data.phone});
+  if (data.website) cards.push({label:'Website',value:data.website});
+  if (data.single_line_address) cards.push({label:'Address',value:data.single_line_address});
+  if (data.overall_star_rating) cards.push({label:'Rating',value:`${data.overall_star_rating} ★ (${data.rating_count} reviews)`});
+  if (data.posts?.data?.length) cards.push({label:'Posts',value:data.posts.data.length+' posts'});
+  if (data.photos?.data?.length) cards.push({label:'Photos',value:data.photos.data.length+' photos'});
+  if (data.cover?.source) cards.push({label:'Cover Photo',value:'✓ URL available'});
+  if (data.picture?.data?.url) cards.push({label:'Profile Picture',value:'✓ URL available'});
+  if (data.id) cards.push({label:'Page ID',value:data.id});
+  if (data.hours) cards.push({label:'Hours',value:'✓ Data present'});
+  if (data.location) cards.push({label:'Location',value:'✓ Data present'});
+  const preview = document.getElementById('dataPreview');
+  if (cards.length === 0) {
+    preview.innerHTML = `<div class="alert alert-warn fade-in">⚠️ Data received but no recognized fields. Check JSON output.</div>`;
+  } else {
+    preview.innerHTML = `
+      <div class="alert alert-success fade-in">✓ ${cards.length} fields extracted successfully!</div>
+      <div class="data-grid fade-in">${cards.map(c=>`<div class="data-card"><div class="data-card-label">${c.label}</div><div class="data-card-value${c.large?' large':''}">${c.value}</div></div>`).join('')}</div>`;
+  }
+  const jOut = document.getElementById('jsonOutput');
+  jOut.style.display = 'block';
+  jOut.textContent = JSON.stringify(data, null, 2);
+}
+
+function showError(err) {
+  document.getElementById('dataPreview').innerHTML = `
+    <div class="alert alert-error fade-in">
+      ✗ <strong>Error ${err.code||''}:</strong> ${err.message}
+      ${err.code===200?'<br><br>→ Your App ID is missing or invalid. Add it in Credentials and generate a token.':''}
+      ${err.code===190?'<br><br>→ Token is invalid or expired. Regenerate it.':''}
+      ${err.code===100?'<br><br>→ Unknown field or invalid page ID/username.':''}
+      ${err.code===4||err.code===17?'<br><br>→ Rate limited. Wait a few minutes.':''}
+    </div>`;
+  document.getElementById('jsonOutput').style.display = 'none';
+}
+
+function updatePreviewWith(base, fields, c) {
+  document.getElementById('endpointPreview').value = base;
+  document.getElementById('fieldsPreview').value = fields;
+  document.getElementById('curlPreview').value = `curl -G "${base}" \\\n  --data-urlencode "fields=${fields}" \\\n  --data-urlencode "access_token=YOUR_ACCESS_TOKEN"`;
+}
+
+function refreshPreview() {
+  const rawUrl = document.getElementById('pageUrl').value.trim();
+  if (!rawUrl) return;
+  const c = getCreds();
+  const pageId = extractPageId(rawUrl);
+  const fieldQ = getSelectedFields().map(f=>fieldMap[f]||f).join(',');
+  const base = `https://graph.facebook.com/${c.version||'v22.0'}/${pageId}`;
+  updatePreviewWith(base, fieldQ, c);
+}
+
+const samples = { restaurant:'https://www.facebook.com/yumrestaurantphnom', shop:'https://www.facebook.com/scrubphornsophary22', service:'https://www.facebook.com/AngkorMotors' };
+function loadSample(type) { document.getElementById('pageUrl').value = samples[type]; refreshPreview(); log('info','Sample: '+samples[type]); }
+
+function log(type, msg) {
+  const t = new Date().toTimeString().slice(0,8);
+  const panel = document.getElementById('logPanel');
+  const line = document.createElement('div');
+  line.className = 'log-line fade-in';
+  const cls = {ok:'log-ok',err:'log-err',info:'log-info',warn:'log-warn',data:'log-data'}[type]||'log-info';
+  const pre = {ok:'✓',err:'✗',info:'›',warn:'⚠',data:'→'}[type]||'·';
+  line.innerHTML = `<span class="log-time">${t}</span><span class="${cls}">${pre} ${msg}</span>`;
+  panel.appendChild(line);
+  panel.scrollTop = panel.scrollHeight;
+  logLines.push(`[${t}] ${pre} ${msg}`);
+}
+
+function clearLog() { document.getElementById('logPanel').innerHTML = ''; logLines = []; log('info','Log cleared.'); }
+function copyLog() { navigator.clipboard.writeText(logLines.join('\n')).then(()=>log('ok','Copied log.')); }
+function copyResult() { if (!scrapedData) { log('warn','No data.'); return; } navigator.clipboard.writeText(JSON.stringify(scrapedData,null,2)).then(()=>log('ok','JSON copied.')); }
+
+document.querySelectorAll('.field-check').forEach(label => {
+  const cb = label.querySelector('input[type=checkbox]');
+  cb.addEventListener('change', () => { label.classList.toggle('checked', cb.checked); refreshPreview(); });
+});
+</script>
+</body>
+</html>

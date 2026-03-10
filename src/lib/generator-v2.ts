@@ -7,7 +7,8 @@ import { parsePostToProduct } from "./facebook-client";
  * Generate site configuration from scraped Facebook page data
  */
 export function generateSiteFromScrapedData(
-    scrapedData: ScrapedPageData
+    scrapedData: ScrapedPageData,
+    pageUrl: string
 ): { site: SiteConfig; products: Product[] } {
 
     // Transform scraped posts to products
@@ -49,7 +50,7 @@ export function generateSiteFromScrapedData(
             phone: scrapedData.contact.phone,
             email: scrapedData.contact.email,
             address: scrapedData.contact.address,
-            facebookUrl: scrapedData.contact.website,
+            facebookUrl: pageUrl, // Store the original page URL
         },
         theme: 'phnom-penh',
         themeConfig: {
